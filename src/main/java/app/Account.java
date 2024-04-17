@@ -1,38 +1,40 @@
 package app;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Account {
 
-    String id;
-    volatile int money;
+    private final Logger logger = LogManager.getLogger(Account.class);
 
-    public synchronized void addMoney(int money) {
-        System.out.println("add money " + money + " to " + this.id);
-        this.money += money;
-    }
-
-    public synchronized boolean subtractMoney(int money) {
-        System.out.println("subtract money " + money + " to " + this.id);
-
-        if (this.money >= money) {
-            this.money -= money;
-            return true;
-        }
-
-        return false;
-    }
+    private final String id;
+    private volatile int money;
 
     public Account(String id, int money) {
         this.id = id;
         this.money = money;
     }
 
-    public String getId() {
-        return id;
+    public synchronized void addMoney(int money) {
+        logger.debug("Topped up with {} to {}", money, this.id);
+        this.money += money;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public synchronized boolean subtractMoney(int money) {
+
+        if (this.money >= money) {
+            this.money -= money;
+            logger.debug("Debited {} to {}", money, this.id);
+            return true;
+        }
+
+        logger.warn("An attempt to withdraw more funds than {} has in your account", this.id);
+        return false;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public int getMoney() {
@@ -41,5 +43,10 @@ public class Account {
 
     public void setMoney(int money) {
         this.money = money;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("id: %s - %s", this.id, this.money);
     }
 }
