@@ -14,7 +14,7 @@ public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
     private static final Random random = new Random();
     private static final int startAmount = 10000;
-    private static final int accountCount = 14;
+    private static final int accountCount = 10;
     private static final int threadCount = 20;
     private static final int maxTransactionCount = 300;
     private static final String idFormat = "%06d";
