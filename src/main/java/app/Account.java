@@ -13,15 +13,22 @@ public class Account {
 
     public Account(String id, int money) {
         this.id = id;
-        this.money = money;
+        this.money = isValid(money) ? money : 0;
     }
 
     public synchronized void addMoney(int money) {
-        logger.debug("Topped up with {} to {}", money, this.id);
-        this.money += money;
+
+        if (isValid(money)) {
+            logger.debug("Topped up with {} to {}", money, this.id);
+            this.money += money;
+        }
     }
 
     public synchronized boolean subtractMoney(int money) {
+
+        if (!isValid(money)) {
+            return false;
+        }
 
         if (this.money >= money) {
             this.money -= money;
@@ -42,7 +49,17 @@ public class Account {
     }
 
     public void setMoney(int money) {
-        this.money = money;
+        if (isValid(money)) {
+            this.money = money;
+        }
+    }
+
+    private boolean isValid(int num) {
+        if (num < 0) {
+            logger.error("Number cannot be less than or equal to zero");
+            return false;
+        }
+        return true;
     }
 
     @Override

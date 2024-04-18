@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TransactionService extends Thread {
 
     private static final AtomicInteger transactionCount = new AtomicInteger(0);
-    private static AtomicInteger maxTransactionCount = new AtomicInteger(30);
+    private static final AtomicInteger maxTransactionCount = new AtomicInteger(30);
 
     private final Logger logger = LogManager.getLogger(TransactionService.class);
     private final Random random = new Random();

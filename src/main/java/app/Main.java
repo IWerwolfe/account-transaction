@@ -3,19 +3,21 @@ package app;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
 
     private static final Logger logger = LogManager.getLogger(Main.class);
     private static final Random random = new Random();
-    private static int startAmount = 10000;
-    private static int accountCount = 14;
-    private static int threadCount = 20;
-    private static int maxTransactionCount = 300;
-    private static String idFormat = "%06d";
+    private static final int startAmount = 10000;
+    private static final int accountCount = 14;
+    private static final int threadCount = 20;
+    private static final int maxTransactionCount = 300;
+    private static final String idFormat = "%06d";
 
     public static void main(String[] args) {
 
@@ -56,7 +58,7 @@ public class Main {
                     transaction.start();
                     return transaction;
                 })
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private static List<Account> genericAccauntList() {
@@ -65,6 +67,6 @@ public class Main {
                     String id = String.format(idFormat, random.nextInt(100));
                     return new Account(id, startAmount);
                 })
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }
