@@ -52,9 +52,11 @@ public class Main {
     }
 
     private static List<TransactionService> genericThreadList(List<Account> accounts) {
+        Monitor monitor = new Monitor();
         return IntStream.range(0, threadCount)
                 .mapToObj(i -> {
                     TransactionService transaction = new TransactionService(accounts, startAmount);
+                    transaction.addObserver(monitor);
                     transaction.start();
                     return transaction;
                 })
@@ -62,10 +64,13 @@ public class Main {
     }
 
     private static List<Account> genericAccauntList() {
+        Monitor monitor = new Monitor();
         return IntStream.range(0, accountCount)
                 .mapToObj(i -> {
-                    String id = String.format(idFormat, random.nextInt(100));
-                    return new Account(id, startAmount);
+                    String id = String.format(idFormat, random.nextInt(100) + 1);
+                    Account account = new Account(id, startAmount);
+                    account.addObserver(monitor);
+                    return account;
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
     }

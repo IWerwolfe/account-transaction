@@ -1,11 +1,11 @@
 package app;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
 
-import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TransactionService extends Thread {
@@ -13,9 +13,9 @@ public class TransactionService extends Thread {
     private static final AtomicInteger transactionCount = new AtomicInteger(0);
     private static final AtomicInteger maxTransactionCount = new AtomicInteger(30);
 
-    private final Logger logger = LogManager.getLogger(TransactionService.class);
     private final Random random = new Random();
     private final List<Account> accounts;
+    private final Set<Observer> observers = new HashSet<>();
     private int maxSum = 10000;
     private int currentTransaction;
     private long startTime;
@@ -41,6 +41,10 @@ public class TransactionService extends Thread {
         transactionCount.set(count);
     }
 
+    private static void clearTransactionCount() {
+        transactionCount.set(0);
+    }
+
     public static AtomicInteger getMaxTransactionCount() {
         return maxTransactionCount;
     }
@@ -51,9 +55,6 @@ public class TransactionService extends Thread {
 
     @Override
     public void run() {
-
-        String message = "{} stream was {} in {}";
-        logger.debug(message, Thread.currentThread().getName(), "launched", LocalTime.now());
 
         while (getTransactionCount().get() < getMaxTransactionCount().get() && !isInterrupted()) {
 
@@ -69,29 +70,49 @@ public class TransactionService extends Thread {
 
             startTransaction(accountOut, accountIn, sum);
         }
-
-        logger.debug(message, Thread.currentThread().getName(), "completed", LocalTime.now());
     }
 
     private void startTransaction(Account accountOut, Account accountIn, int sum) {
 
-        String message = String.format("The transaction %s to transfer money in the amount of %s from %s to %s was {} {} ms",
+        if (accountOut.equals(accountIn)) {
+            notifyObservers(Level.WARN,
+                    String.format("It is prohibited to transfer money to your own account, transaction %s for %s is blocked", currentTransaction, accountOut.getId()));
+            return;
+        }
+
+        String message = String.format("The transaction %s to transfer money in the amount of %s from %s to %s was",
                 currentTransaction, sum, accountOut.getId(), accountIn.getId());
 
         if (accountOut.subtractMoney(sum)) {
             accountIn.addMoney(sum);
-            logger.info(message, "successfully completed in", System.currentTimeMillis() - startTime);
+            notifyObservers(Level.INFO,
+                    String.format("%s successfully completed in %s ms", message, (System.currentTimeMillis() - startTime)));
             return;
         }
-        logger.warn(message, "interrupted in", System.currentTimeMillis() - startTime);
+        notifyObservers(Level.WARN,
+                String.format("%s interrupted in %s ms", message, (System.currentTimeMillis() - startTime)));
     }
 
     private void sleep() {
         try {
             sleep(random.nextInt(1000) + 1000);
         } catch (InterruptedException e) {
-            logger.error("An error occurred while sleeping thread {}: {}", Thread.currentThread().getName(), e.getMessage());
-            logger.error(e.fillInStackTrace());
+            String message = String.format("An error occurred while sleeping thread %s: %s",
+                    Thread.currentThread().getName(), e.getMessage());
+            notifyObservers(Level.ERROR, message);
+            notifyObservers(Level.ERROR, String.valueOf(e.fillInStackTrace()));
         }
+    }
+
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
+    }
+
+    void notifyObservers(Level level, String message) {
+        observers.forEach(observer -> observer.logging(level, message));
     }
 }
